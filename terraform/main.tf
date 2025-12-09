@@ -10,11 +10,11 @@ terraform {
 
   # Remote state backend i Azure Storage
   backend "azurerm" {
-  resource_group_name  = "rg-tfstate-chris.mod8"
-  storage_account_name = "storageaccmod8chris"
-  container_name       = "tfstate"
-  key                  = "terraform.tfstate"
-}
+    resource_group_name  = "rg-tfstate-chris.mod8"
+    storage_account_name = "storageaccmod8chris"
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
+  }
 
 }
 
