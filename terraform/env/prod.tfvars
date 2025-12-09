@@ -1,4 +1,4 @@
 environment      = "prod"
 project_name     = "chrismod8"
-account_tier     = "Premium"
-replication_type = "LRS"
+account_tier     = "Standard"
+replication_type = "GRS"
