@@ -65,5 +65,3 @@ Følgende skjermbilder er lagt ved i innleveringen:
 * CI-workflow med plan-kjøringer
 * CD-workflow der alle tre miljøer er deployet
 * Eksempel på PR med plan-kommentar
-
-Hvis du ønsker det kan jeg også lage den helt endelige, ferdig formatterte innleveringen i ett dokument – bare si ifra.
