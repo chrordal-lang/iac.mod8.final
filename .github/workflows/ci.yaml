@@ -1,0 +1,116 @@
+name: CI - Terraform
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write        # nødvendig for OIDC
+  contents: read
+  pull-requests: write   # nødvendig for å kommentere på PR
+
+jobs:
+  terraform-ci:
+    runs-on: ubuntu-latest
+
+    environment: dev
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_USE_OIDC: "true"
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Terraform init
+        id: init
+        run: terraform init -input=false
+
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform plan dev
+        id: plan_dev
+        run: |
+          terraform plan -no-color -var-file="env/dev.tfvars" > plan-dev.txt
+
+      - name: Terraform plan test
+        id: plan_test
+        run: |
+          terraform plan -no-color -var-file="env/test.tfvars" > plan-test.txt
+
+      - name: Terraform plan prod
+        id: plan_prod
+        run: |
+          terraform plan -no-color -var-file="env/prod.tfvars" > plan-prod.txt
+
+      - name: Comment Terraform plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const dev = fs.readFileSync('terraform/plan-dev.txt', 'utf8');
+            const test = fs.readFileSync('terraform/plan-test.txt', 'utf8');
+            const prod = fs.readFileSync('terraform/plan-prod.txt', 'utf8');
+
+            const body = `
+            ## Terraform plan resultater
+
+            <details>
+            <summary>dev</summary>
+
+            \`\`\`
+            ${dev}
+            \`\`\`
+            </details>
+
+            <details>
+            <summary>test</summary>
+
+            \`\`\`
+            ${test}
+            \`\`\`
+            </details>
+
+            <details>
+            <summary>prod</summary>
+
+            \`\`\`
+            ${prod}
+            \`\`\`
+            </details>
+            `;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
