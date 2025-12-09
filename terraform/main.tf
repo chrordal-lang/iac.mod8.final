@@ -20,7 +20,9 @@ terraform {
 
 provider "azurerm" {
   features {}
+  use_oidc = true
 }
+
 
 # Resource Group for miljøet (dev/test/prod)
 resource "azurerm_resource_group" "rg" {
